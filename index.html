@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta Inmunológica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sage: #8ba88e;
+            --lilac: #b39ddb;
+            --amber: #d4a373;
+            --bg-paper: #fdfaf3;
+            --text-dark: #2c3e50;
+            --shadow: rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-paper);
+            background-image: url("https://www.transparenttextures.com/patterns/cream-paper.png");
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: var(--text-dark);
+            text-shadow: 1px 1px 2px var(--shadow);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #555;
+        }
+
+        /* --- Contenedor de la Ruleta --- */
+        .roulette-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 1;
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            filter: drop-shadow(0 15px 25px var(--shadow));
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid #fff;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+            /* Sombra interna simulada en JS */
+        }
+
+        /* El puntero superior */
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 50px;
+            background: #e74c3c;
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 10;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3));
+        }
+
+        /* Botón central estático */
+        .center-hub {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 4px solid var(--text-dark);
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .center-hub::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            background: var(--text-dark);
+            border-radius: 50%;
+        }
+
+        /* --- Controles --- */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 450px;
+            margin-top: 20px;
+        }
+
+        .btn-spin {
+            background: linear-gradient(135deg, var(--amber) 0%, #b88655 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.5rem;
+            font-family: 'Playfair Display', serif;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(212, 163, 115, 0.4);
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            width: 100%;
+        }
+
+        .btn-spin:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 8px rgba(212, 163, 115, 0.4);
+        }
+
+        .btn-spin:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* --- Panel de Equipos y Puntos --- */
+        .team-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 600px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px var(--shadow);
+            border: 1px solid #e0e0e0;
+        }
+
+        .team-panel h3 {
+            margin-bottom: 15px;
+            font-family: 'Playfair Display', serif;
+            border-bottom: 2px solid var(--sage);
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+        }
+
+        .btn-secondary {
+            background: var(--sage);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover { background: #718d74; }
+        
+        .btn-export { background: var(--text-dark); }
+        .btn-export:hover { background: #1a252f; }
+
+        /* Lista de puntajes */
+        .score-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            background: #fdfdfd;
+        }
+
+        .score-item:nth-child(even) { background: #f9f9f9; }
+
+        /* --- Modal de Resultado --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: var(--bg-paper);
+            background-image: url("https://www.transparenttextures.com/patterns/cream-paper.png");
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid var(--amber);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .result-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+        .modal-content h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .modal-content p {
+            color: #555;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        /* Toggle Sonido */
+        .sound-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .sound-toggle:hover { opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+    <button class="sound-toggle" id="btnSound" title="Alternar Sonido">🔊</button>
+
+    <header>
+        <h1>Ruleta Dinámica</h1>
+        <p class="subtitle">Gira para descubrir tu próximo desafío inmunológico</p>
+    </header>
+
+    <div class="roulette-wrapper">
+        <div class="pointer"></div>
+        <!-- El canvas donde se dibuja la ruleta -->
+        <canvas id="rouletteCanvas" width="500" height="500"></canvas>
+        <div class="center-hub"></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-spin" id="btnSpin">Girar Ruleta</button>
+    </div>
+
+    <!-- Panel de Registro -->
+    <div class="team-panel">
+        <h3>
+            Registro de Puntos
+            <button class="btn-secondary btn-export" id="btnExport" title="Exportar a CSV">📥 CSV</button>
+        </h3>
+        
+        <div class="input-group">
+            <input type="text" id="teamName" placeholder="Nombre del Equipo (ej. Equipo Alpha)">
+            <button class="btn-secondary" id="btnRegister">Asignar Punto</button>
+        </div>
+        
+        <p style="font-size: 0.85rem; color: #888; margin-bottom: 10px; margin-top: -5px;">
+            Último resultado obtenido: <strong id="lastResultLabel">Ninguno</strong>
+        </p>
+
+        <ul class="score-list" id="scoreList">
+            <!-- Los puntajes se insertan aquí vía JS -->
+        </ul>
+    </div>
+
+    <!-- Modal de Resultado -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <div class="result-icon" id="modalIcon">🦠</div>
+            <h2 id="modalTitle">Antígeno Detectado</h2>
+            <p id="modalAction">¡Prepárate para defender! Responde la pregunta sobre la selección negativa en el Timo.</p>
+            <button class="btn-secondary" id="btnCloseModal" style="width: 100%; font-size: 1.2rem; padding: 15px;">Aceptar Desafío</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * CONFIGURACIÓN DE LA RULETA
+         * * Instrucción: Para cambiar los iconos por imágenes personalizadas,
+         * cambia 'type: "text"' a 'type: "image"' y pon la ruta de tu archivo en 'content'.
+         * Ejemplo: { type: "image", content: "ruta/a/tu/icono_macrofago.png", ... }
+         * En este código uso emojis como placeholders por defecto.
+         */
+        const SECTORS = [
+            { id: 1, type: "text", content: "🦠", color: "var(--sage)", title: "Patógeno", action: "Pregunta sobre bacterias encapsuladas y el bazo." },
+            { id: 2, type: "text", content: "🛡️", color: "var(--lilac)", title: "Anticuerpo", action: "Nombra las funciones de la Pulpa Blanca." },
+            { id: 3, type: "text", content: "🩸", color: "var(--amber)", title: "Eritrocito", action: "Explica la filtración en la Pulpa Roja." },
+            { id: 4, type: "text", content: "🧠", color: "var(--sage)", title: "Memoria Inmune", action: "Pregunta sobre la involución tímica." },
+            { id: 5, type: "text", content: "⚔️", color: "var(--lilac)", title: "Macrófago", action: "Identifica los Corpúsculos de Hassall." },
+            { id: 6, type: "text", content: "🧬", color: "var(--amber)", title: "Genética", action: "Explica la función de la proteína AIRE." },
+            { id: 7, type: "text", content: "🔍", color: "var(--sage)", title: "Selección", action: "Diferencia entre selección positiva y negativa." },
+            { id: 8, type: "text", content: "🛡️", color: "var(--lilac)", title: "Anticuerpo", action: "Comodín: ¡Elige a qué equipo restarle un punto!" },
+            { id: 9, type: "text", content: "🩸", color: "var(--amber)", title: "Eritrocito", action: "Describe el 'signo de la vela' en pediatría." },
+            { id: 10, type: "text", content: "⚔️", color: "var(--sage)", title: "Macrófago", action: "Pregunta clínica sobre la Esplenomegalia." }
+        ];
+
+        // --- Variables Globales ---
+        const canvas = document.getElementById('rouletteCanvas');
+        const ctx = canvas.getContext('2d');
+        const btnSpin = document.getElementById('btnSpin');
+        
+        const numSectors = SECTORS.length;
+        const arcSize = (2 * Math.PI) / numSectors;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = centerX;
+
+        // Física de giro
+        let currentAngle = 0;      // Ángulo de rotación actual (radianes)
+        let angularVelocity = 0;   // Velocidad de giro
+        let angularFriction = 0.985; // Desaceleración por frame (inercia)
+        let isSpinning = false;
+        let animationFrameId;
+
+        // Sonido y Estado
+        let soundEnabled = true;
+        let lastResult = null; // Guarda el objeto del último sector ganado
+        let scores = []; // Array para localStorage
+
+        // --- Funciones de Dibujo (Canvas) ---
+
+        function getCSSVariable(varName) {
+            return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        }
+
+        // Convertir colores de CSS var a HEX/RGB para Canvas
+        const colors = SECTORS.map(s => {
+            if(s.color.startsWith('var(')) {
+                const varName = s.color.match(/var\(([^)]+)\)/)[1];
+                return getCSSVariable(varName);
+            }
+            return s.color;
+        });
+
+        // Pre-cargar imágenes si se configuran
+        const loadedImages = {};
+        SECTORS.forEach(sector => {
+            if (sector.type === "image") {
+                const img = new Image();
+                img.src = sector.content;
+                loadedImages[sector.id] = img;
+            }
+        });
+
+        function drawRoulette() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(currentAngle);
+
+            for (let i = 0; i < numSectors; i++) {
+                const angle = i * arcSize;
+                const sector = SECTORS[i];
+
+                // Dibujar el sector (porcion de pizza)
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, radius, angle, angle + arcSize);
+                ctx.lineTo(0, 0);
+                ctx.fillStyle = colors[i];
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#ffffff";
+                ctx.stroke();
+
+                // Dibujar contenido (Texto/Emoji o Imagen)
+                ctx.save();
+                // Rotar al centro del sector
+                ctx.rotate(angle + arcSize / 2);
+                // Mover hacia el borde exterior
+                ctx.translate(radius * 0.75, 0); 
+                // Rotar para que quede derecho respecto al centro
+                ctx.rotate(Math.PI / 2);
+
+                if (sector.type === "text") {
+                    ctx.font = "bold 40px Arial"; // Tamaño del emoji/icono
+                    ctx.fillStyle = "#333";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(sector.content, 0, 0);
+                } else if (sector.type === "image" && loadedImages[sector.id] && loadedImages[sector.id].complete) {
+                    const img = loadedImages[sector.id];
+                    const imgSize = 50; // Ajusta el tamaño de la imagen
+                    ctx.drawImage(img, -imgSize/2, -imgSize/2, imgSize, imgSize);
+                }
+
+                ctx.restore();
+            }
+
+            // Sombra interna general
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+            ctx.lineWidth = 15;
+            ctx.strokeStyle = "rgba(0,0,0,0.05)";
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // --- Lógica de Giro ---
+
+        function playTickSound() {
+            if (!soundEnabled) return;
+            // Síntesis de sonido simple para el "tic"
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if(!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Tono agudo
+            oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.05);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // Volumen bajo
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.05);
+        }
+
+        let lastTickSector = -1;
+
+        function animateSpin() {
+            if (angularVelocity > 0.002) {
+                currentAngle += angularVelocity;
+                currentAngle %= (2 * Math.PI); // Mantener entre 0 y 2PI
+                angularVelocity *= angularFriction; // Aplicar inercia (fricción)
+
+                // Lógica para hacer el sonido de "tic" al pasar por el puntero superior
+                // El puntero está en la parte superior (-PI/2 o 270 grados respecto a canvas standard)
+                // Calculamos qué sector está en la posición superior (-Math.PI / 2)
+                const normalizedAngle = (2 * Math.PI - currentAngle) % (2 * Math.PI);
+                // Ajustamos por el desfase del puntero (arriba es -90 deg)
+                const pointerAngle = (normalizedAngle + (3 * Math.PI / 2)) % (2 * Math.PI);
+                const currentSectorIndex = Math.floor(pointerAngle / arcSize);
+
+                if (currentSectorIndex !== lastTickSector) {
+                    playTickSound();
+                    lastTickSector = currentSectorIndex;
+                }
+
+                drawRoulette();
+                animationFrameId = requestAnimationFrame(animateSpin);
+            } else {
+                // Detención
+                isSpinning = false;
+                angularVelocity = 0;
+                btnSpin.disabled = false;
+                cancelAnimationFrame(animationFrameId);
+                determineResult();
+            }
+        }
+
+        function determineResult() {
+            // Calcular sector ganador basándose en el ángulo final
+            // Ángulo normalizado para contrarrestar la rotación del canvas
+            const normalizedAngle = (2 * Math.PI - currentAngle) % (2 * Math.PI);
+            // El puntero físico está arriba (-90 grados o 270 grados = 3*PI/2)
+            const winningAngle = (normalizedAngle + (3 * Math.PI / 2)) % (2 * Math.PI);
+            const winningIndex = Math.floor(winningAngle / arcSize);
+            
+            const result = SECTORS[winningIndex];
+            lastResult = result;
+            
+            // Actualizar UI
+            document.getElementById('lastResultLabel').textContent = result.title;
+            showModal(result);
+            
+            // Sonido de victoria suave
+            if(soundEnabled) {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if(audioCtx) {
+                    const osc = audioCtx.createOscillator();
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime); // La
+                    osc.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.1); // Do#
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.2); // Mi
+                    osc.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                }
+            }
+        }
+
+        btnSpin.addEventListener('click', () => {
+            if (isSpinning) return;
+            isSpinning = true;
+            btnSpin.disabled = true;
+            
+            // Impulso aleatorio entre 0.3 y 0.5 (velocidad inicial)
+            angularVelocity = Math.random() * 0.2 + 0.3; 
+            // Variar levemente la fricción para que el tiempo de parada sea impredecible
+            angularFriction = Math.random() * 0.005 + 0.985; 
+            
+            lastTickSector = -1;
+            animateSpin();
+        });
+
+        // --- Manejo del Modal ---
+        const modalOverlay = document.getElementById('resultModal');
+        
+        function showModal(result) {
+            document.getElementById('modalIcon').textContent = result.type === 'text' ? result.content : '🎉';
+            // Si usas imágenes, podrías cambiar el innerHTML de modalIcon a un tag <img>
+            
+            document.getElementById('modalTitle').textContent = result.title;
+            document.getElementById('modalAction').textContent = result.action;
+            modalOverlay.classList.add('active');
+        }
+
+        document.getElementById('btnCloseModal').addEventListener('click', () => {
+            modalOverlay.classList.remove('active');
+            document.getElementById('teamName').focus(); // Preparar para registrar
+        });
+
+        // --- Panel de Puntuaciones y LocalStorage ---
+        const LOCAL_STORAGE_KEY = 'ruleta_scores_v1';
+        const scoreListEl = document.getElementById('scoreList');
+        const teamInput = document.getElementById('teamName');
+
+        function loadScores() {
+            const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (stored) {
+                scores = JSON.parse(stored);
+                renderScores();
+            }
+        }
+
+        function saveScores() {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(scores));
+            renderScores();
+        }
+
+        function renderScores() {
+            scoreListEl.innerHTML = '';
+            // Mostrar los más recientes primero
+            [...scores].reverse().forEach(score => {
+                const li = document.createElement('li');
+                li.className = 'score-item';
+                
+                const timeStr = new Date(score.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                li.innerHTML = `
+                    <span><strong>${score.team}</strong> <span style="color:#888; font-size:0.8rem">(${timeStr})</span></span>
+                    <span>${score.resultTitle} ${score.resultIcon}</span>
+                `;
+                scoreListEl.appendChild(li);
+            });
+        }
+
+        document.getElementById('btnRegister').addEventListener('click', () => {
+            const team = teamInput.value.trim();
+            if (!team) {
+                alert('Por favor ingresa un nombre de equipo.');
+                return;
+            }
+            if (!lastResult) {
+                alert('Debes girar la ruleta primero para obtener un resultado.');
+                return;
+            }
+
+            const newScore = {
+                id: Date.now(),
+                team: team,
+                resultId: lastResult.id,
+                resultTitle: lastResult.title,
+                resultIcon: lastResult.type === 'text' ? lastResult.content : 'Img',
+                timestamp: new Date().toISOString()
+            };
+
+            scores.push(newScore);
+            saveScores();
+            
+            // Limpiar
+            teamInput.value = '';
+            lastResult = null;
+            document.getElementById('lastResultLabel').textContent = 'Ninguno';
+        });
+
+        // --- Exportar a CSV ---
+        document.getElementById('btnExport').addEventListener('click', () => {
+            if (scores.length === 0) {
+                alert('No hay datos para exportar.');
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Fecha/Hora,Equipo,Resultado Obtenido\r\n"; // Headers
+
+            scores.forEach(row => {
+                const date = new Date(row.timestamp).toLocaleString();
+                // Escapar comas en los textos
+                const teamEscaped = `"${row.team.replace(/"/g, '""')}"`;
+                const titleEscaped = `"${row.resultTitle}"`;
+                
+                csvContent += `${date},${teamEscaped},${titleEscaped}\r\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `resultados_ruleta_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link); // Requerido para Firefox
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // --- Toggle Sonido ---
+        const btnSound = document.getElementById('btnSound');
+        btnSound.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            btnSound.textContent = soundEnabled ? '🔊' : '🔇';
+            btnSound.title = soundEnabled ? 'Silenciar' : 'Activar Sonido';
+        });
+
+        // Asegurarse de dibujar al cargar
+        // Si hay imágenes configuradas, dibujamos después de que cargue la ventana para asegurar que se vean
+        window.addEventListener('load', () => {
+            // Pequeño timeout para asegurar que las fuentes personalizadas se aplicaron antes de dibujar en canvas
+            setTimeout(() => {
+                drawRoulette();
+            }, 100);
+            loadScores();
+        });
+
+    </script>
+</body>
+</html>
